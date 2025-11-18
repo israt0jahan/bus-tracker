@@ -1,0 +1,998 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhaka Bus Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0042f8 0%,#5d86f8  100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 15px 30px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-container {
+            width: 70px;
+            height: 70px;
+            padding: 9 px;
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .logo-container:hover {
+            transform: scale(1.05);
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #1D45B5 ;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 10px 15px 10px 40px;
+            border: 2px solid #1D45B5;
+            border-radius: 25px;
+            font-size: 14px;
+            width: 220px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            width: 280px;
+            box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #1D45B5;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #1D45B5;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        select {
+            background: white;
+            color: #334155;
+        }
+
+        button {
+            background: #1D45B5;
+            color: white;
+        }
+
+        button:hover {
+            background: #0284c7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(14,165,233,0.3);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #map {
+            flex: 1;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            min-width: 0;
+            background: white;
+            position: relative;
+        }
+
+        .sidebar {
+            width: 360px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #1D45B5;
+            border-radius: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card {
+            background: linear-gradient(45deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(26, 26, 26, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .section-title {
+            color: #1D45B5;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 15px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bus-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 5px solid #1D45B5;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .bus-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .bus-number {
+            font-weight: 700;
+            color: #1D45B5;
+            font-size: 18px;
+        }
+
+        .crowding {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .crowding.low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .crowding.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .crowding.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .bus-route {
+            font-size: 14px;
+            color: #475569;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .bus-info {
+            font-size: 12px;
+            color: #64748b;
+            margin: 4px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .status-badge.on-time {
+            background: #22c55e;
+            color: white;
+        }
+
+        .status-badge.delayed {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .legend {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .legend h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .bus-stop-marker {
+            background: white;
+            border: 3px solid #1D45B5;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+            border-radius: 15px;
+        }
+
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 11px;
+            padding: 0;
+        }
+
+        .popup-content {
+            padding: 15px;
+            min-width: 220px;
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #1D45B5 0%, #06b6d4 100%);
+            color: white;
+            padding: 12px;
+            margin: -15px -39px 3px -36px;
+            align-content: center;
+            align-self: center;
+            border-radius: 12px 12px 0 0;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        .popup-row:last-child {
+            border-bottom: none;
+        }
+
+        .popup-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .popup-value {
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .contact-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .contact-title {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin: 4px 0;
+            font-size: 12px;
+        }
+
+        .contact-icon {
+            color: #1D45B5;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 15px;
+            }
+            .search-input {
+                width: 150px;
+            }
+            .search-input:focus {
+                width: 180px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .logo-container {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <div class="logo-container" title="Dhaka Bus Tracker">
+               <a href="https://www.uttara.ac.bd/"><img src="https://erp.uttarauniversity.edu.bd/temp/assets/img/header_logo.png" style="height: 50px;" alt="UU logo"> </a>
+            </div>
+            <div class="header-title">
+                <h1>UU Bus Tracker</h1>
+                <span class="subtitle">Real-time Bus Tracking System</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search bus or stop..." oninput="searchBus()">
+            </div>
+        </div>
+    </header>
+
+    <div class="controls">
+        <select id="routeSelect" onchange="filterRoute()">
+            <option value="all">All Routes</option>
+            <option value="route1">Route 1 - Campus to Uttara</option>
+            <option value="route2">Route 2 - Campus to Mirpur</option>
+            <option value="route3">Route 3 - Campus to Gazipur</option>
+            <option value="route4">Route 4 - Campus to Mawna</option>
+            <option value="route5">Route 5 - Campus to Chandra</option>    
+        </select>
+        <button onclick="centerMap()">📍 Center Map</button>
+        <button onclick="toggleSimulation()" id="simBtn">⏸️ Pause</button>
+        <button onclick="findNearestBus()">📡 Nearest Bus</button>
+        <button onclick="showAllStops()">🚏 Show Stops</button>
+    </div>
+
+    <div class="main-content">
+        <div id="map"></div>
+        <div class="sidebar">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Buses</div>
+                    <div class="stat-value" id="totalBuses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">On Time</div>
+                    <div class="stat-value" id="onTimeBuses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Delayed</div>
+                    <div class="stat-value" id="delayedBuses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Speed</div>
+                    <div class="stat-value" id="avgSpeed">0</div>
+                </div>
+            </div>
+
+            
+            
+            <div class="legend">
+                <h3>🗺️ Map Legend</h3>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #22c55e;"></div>
+                    <span>Route 1 - Campus to Uttara</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #3b82f6;"></div>
+                    <span>Route 2 - Campus to Mirpur</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #f97316;"></div>
+                    <span>Route 3 - Campus to Gazipur</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #e11d48;"></div>
+                    <span>Route 4 - Campus to Mawna</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #8b5cf6;"></div>
+                    <span>Route 5 - Campus to Chandra</span>
+                </div>
+            
+            </div>
+                <div class="section-title">🚌 Active Buses</div>
+                <div id="busList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        let map;
+        let buses = [];
+        let busStops = [];
+        let markers = [];
+        let stopMarkers = [];
+        let routeLines = [];
+        let simulationRunning = true;
+        let currentRoute = 'all';
+        let showStops = false;
+
+        const routes = {
+            route1: { 
+                name: 'Route 1 - Campus to Uttara', 
+                color: '#22c55e',
+                path: [[23.7808, 90.4050], [23.7750, 90.4100], [23.7650, 90.4150], [23.7550, 90.4100], [23.7465, 90.4072]]
+            },
+            route2: { 
+                name: 'Route 2 - Campus to Mirpur', 
+                color: '#3b82f6',
+                path: [[23.7808, 90.4200], [23.7900, 90.4100], [23.8000, 90.3950], [23.8100, 90.3850], [23.8200, 90.3700]]
+            },
+            route3: { 
+                name: 'Route 3 - Campus to Gazipur', 
+                color: '#f97316',
+                path: [[23.8750, 90.3950], [23.8500, 90.4000], [23.8200, 90.4100], [23.7808, 90.4100], [23.7250, 90.4050]]
+            },
+            route4: {
+                name: 'Route 4 - Campus to Mawna',
+                color: '#e11d48',
+                path: [[23.7516, 90.3936], [23.7450, 90.4050], [23.7389, 90.3958], [23.7334, 90.4176], [23.7104, 90.4074]]
+            },
+            route5: {
+                name: 'Route 5 - Campus to Chandra',
+                color: '#8b5cf6',
+                path: [[23.8191, 90.4267], [23.8212, 90.4215], [23.8436, 90.3978], [23.8693, 90.3794], [23.8896, 90.3792]]
+            }
+        };
+
+        function initMap() {
+            map = L.map('map').setView([23.8103, 90.4125], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+
+            drawRouteLines();
+            setTimeout(() => map.invalidateSize(), 200);
+        }
+
+        function drawRouteLines() {
+            Object.keys(routes).forEach(routeKey => {
+                const route = routes[routeKey];
+                const polyline = L.polyline(route.path, {
+                    color: route.color,
+                    weight: 4,
+                    opacity: 0.6,
+                    dashArray: '10, 10'
+                }).addTo(map);
+                routeLines.push(polyline);
+            });
+        }
+
+        function createBuses() {
+            buses = [
+                // Route 1 - Campus to Uttara
+                { id: 'DH-101', route: 'route1', lat: 23.7808, lng: 90.4050, speed: 28, passengers: 25, status: 'on-time', direction: 1, driver: '01711-223344', helper: '01811-334455', nextStop: 'Farmgate', eta: '5 min' },
+                { id: 'DH-102', route: 'route1', lat: 23.7750, lng: 90.4100, speed: 32, passengers: 18, status: 'on-time', direction: 1, driver: '01911-445566', helper: '01611-556677', nextStop: 'Karwan Bazar', eta: '3 min' },
+                { id: 'DH-103', route: 'route1', lat: 23.7650, lng: 90.4150, speed: 25, passengers: 35, status: 'delayed', direction: 1, driver: '01511-667788', helper: '01711-778899', nextStop: 'Shahbagh', eta: '8 min' },
+                { id: 'DH-104', route: 'route1', lat: 23.7550, lng: 90.4100, speed: 30, passengers: 22, status: 'on-time', direction: -1, driver: '01811-889900', helper: '01911-990011', nextStop: 'Paltan', eta: '4 min' },
+                { id: 'DH-105', route: 'route1', lat: 23.7465, lng: 90.4072, speed: 27, passengers: 28, status: 'on-time', direction: -1, driver: '01611-112233', helper: '01511-223344', nextStop: 'Motijheel', eta: '2 min' },
+                
+                // Route 2 - Campus to Mirpur
+                { id: 'DH-201', route: 'route2', lat: 23.7808, lng: 90.4200, speed: 24, passengers: 30, status: 'delayed', direction: 1, driver: '01711-334455', helper: '01811-445566', nextStop: 'Banani', eta: '6 min' },
+                { id: 'DH-202', route: 'route2', lat: 23.7900, lng: 90.4100, speed: 29, passengers: 16, status: 'on-time', direction: 1, driver: '01911-556677', helper: '01611-667788', nextStop: 'Mohakhali', eta: '4 min' },
+                { id: 'DH-203', route: 'route2', lat: 23.8000, lng: 90.3950, speed: 26, passengers: 32, status: 'on-time', direction: 1, driver: '01511-778899', helper: '01711-889900', nextStop: 'Cantonment', eta: '5 min' },
+                { id: 'DH-204', route: 'route2', lat: 23.8100, lng: 90.3850, speed: 31, passengers: 20, status: 'on-time', direction: -1, driver: '01811-990011', helper: '01911-001122', nextStop: 'Kakoli', eta: '3 min' },
+                { id: 'DH-205', route: 'route2', lat: 23.8200, lng: 90.3700, speed: 23, passengers: 36, status: 'delayed', direction: -1, driver: '01611-112233', helper: '01511-223344', nextStop: 'Mirpur 10', eta: '7 min' },
+                { id: 'DH-206', route: 'route2', lat: 23.7950, lng: 90.4050, speed: 28, passengers: 14, status: 'on-time', direction: 1, driver: '01711-334455', helper: '01811-445566', nextStop: 'Tejgaon', eta: '4 min' },
+                
+                // Route 3 - Campus to Gazipur
+                { id: 'DH-301', route: 'route3', lat: 23.8750, lng: 90.3950, speed: 27, passengers: 26, status: 'on-time', direction: -1, driver: '01911-556677', helper: '01611-667788', nextStop: 'Uttara Sector 7', eta: '3 min' },
+                { id: 'DH-302', route: 'route3', lat: 23.8500, lng: 90.4000, speed: 25, passengers: 29, status: 'delayed', direction: -1, driver: '01511-778899', helper: '01711-889900', nextStop: 'Airport', eta: '8 min' },
+                { id: 'DH-303', route: 'route3', lat: 23.8200, lng: 90.4100, speed: 30, passengers: 19, status: 'on-time', direction: -1, driver: '01811-990011', helper: '01911-001122', nextStop: 'Mohakhali', eta: '5 min' },
+                { id: 'DH-304', route: 'route3', lat: 23.7808, lng: 90.4100, speed: 26, passengers: 33, status: 'on-time', direction: 1, driver: '01611-112233', helper: '01511-223344', nextStop: 'Farmgate', eta: '4 min' },
+                { id: 'DH-305', route: 'route3', lat: 23.7250, lng: 90.4050, speed: 22, passengers: 38, status: 'delayed', direction: 1, driver: '01711-334455', helper: '01811-445566', nextStop: 'Gulistan', eta: '9 min' },
+                { id: 'DH-306', route: 'route3', lat: 23.8400, lng: 90.4050, speed: 29, passengers: 17, status: 'on-time', direction: -1, driver: '01911-556677', helper: '01611-667788', nextStop: 'Banani', eta: '3 min' },
+                { id: 'DH-307', route: 'route3', lat: 23.7600, lng: 90.4080, speed: 28, passengers: 24, status: 'on-time', direction: 1, driver: '01511-778899', helper: '01711-889900', nextStop: 'Shahbagh', eta: '4 min' },
+
+                // Route 4 - Campus to Mawna
+
+                { id: 'DH-401', route: 'route4', lat: 23.7550, lng: 90.3900, speed: 24, passengers: 21, status: 'on-time', direction: 1, driver: '01812-123456', helper: '01712-654321', nextStop: 'Karwan Bazar', eta: '2 min' },
+                { id: 'DH-402', route: 'route4', lat: 23.7380, lng: 90.3955, speed: 20, passengers: 34, status: 'delayed', direction: -1, driver: '01913-223344', helper: '01613-443322', nextStop: 'Shahbagh', eta: '6 min' },
+                { id: 'DH-403', route: 'route4', lat: 23.7330, lng: 90.4170, speed: 22, passengers: 28, status: 'on-time', direction: 1, driver: '01714-334455', helper: '01814-554433', nextStop: 'Motijheel', eta: '3 min' },
+                { id: 'DH-404', route: 'route4', lat: 23.7450, lng: 90.4050, speed: 26, passengers: 19, status: 'on-time', direction: -1, driver: '01515-667788', helper: '01915-887766', nextStop: 'Shahbagh', eta: '4 min' },
+                { id: 'DH-405', route: 'route4', lat: 23.7510, lng: 90.3930, speed: 23, passengers: 31, status: 'delayed', direction: 1, driver: '01616-778899', helper: '01716-998877', nextStop: 'Karwan Bazar', eta: '5 min' },
+                { id: 'DH-406', route: 'route4', lat: 23.7650, lng: 90.3880, speed: 27, passengers: 25, status: 'on-time', direction: -1, driver: '01817-889900', helper: '01917-009988', nextStop: 'Farmgate', eta: '2 min' },
+                { id: 'DH-407', route: 'route4', lat: 23.7800, lng: 90.4100, speed: 29, passengers: 22, status: 'on-time', direction: 1, driver: '01718-990011', helper: '01618-110099', nextStop: 'Mohakhali', eta: '3 min' },
+                { id: 'DH-408', route: 'route4', lat: 23.7920, lng: 90.4070, speed: 21, passengers: 30, status: 'delayed', direction: -1, driver: '01519-112233', helper: '01819-332211', nextStop: 'Gulshan', eta: '7 min' },
+                { id: 'DH-409', route: 'route4', lat: 23.7100, lng: 90.4070, speed: 24, passengers: 36, status: 'on-time', direction: 1, driver: '01920-445566', helper: '01720-665544', nextStop: 'Sadarghat', eta: '4 min' },
+
+                // Route 5 - Campus to Chandra 
+
+                { id: 'DH-501', route: 'route5', lat: 23.8195, lng: 90.4260, speed: 26, passengers: 23, status: 'on-time', direction: 1, driver: '01820-123456', helper: '01720-654321', nextStop: 'Bashundhara Gate', eta: '2 min' },
+                { id: 'DH-502', route: 'route5', lat: 23.8105, lng: 90.4250, speed: 24, passengers: 27, status: 'delayed', direction: -1, driver: '01921-223344', helper: '01621-443322', nextStop: 'Baridhara DOHS', eta: '5 min' },
+                { id: 'DH-503', route: 'route5', lat: 23.8210, lng: 90.4210, speed: 28, passengers: 18, status: 'on-time', direction: 1, driver: '01722-334455', helper: '01822-554433', nextStop: 'Kuril Flyover', eta: '3 min' },
+                { id: 'DH-504', route: 'route5', lat: 23.8430, lng: 90.3980, speed: 30, passengers: 20, status: 'on-time', direction: -1, driver: '01523-667788', helper: '01923-887766', nextStop: 'Airport', eta: '4 min' },
+                { id: 'DH-505', route: 'route5', lat: 23.8690, lng: 90.3792, speed: 22, passengers: 32, status: 'delayed', direction: 1, driver: '01624-778899', helper: '01724-998877', nextStop: 'Azampur', eta: '6 min' },
+                { id: 'DH-506', route: 'route5', lat: 23.8810, lng: 90.3770, speed: 25, passengers: 29, status: 'on-time', direction: -1, driver: '01825-889900', helper: '01925-009988', nextStop: 'Uttara Sector 13', eta: '3 min' }
+
+
+            ];
+        }
+
+        function createBusStops() {
+    busStops = [
+        { name: 'Mohakhali', lat: 23.7808, lng: 90.4125, routes: ['route1', 'route2', 'route3'] },
+        { name: 'Farmgate', lat: 23.7565, lng: 90.3869, routes: ['route1', 'route3', 'route4'] },
+        { name: 'Karwan Bazar', lat: 23.7516, lng: 90.3936, routes: ['route1', 'route4'] },
+        { name: 'Shahbagh', lat: 23.7389, lng: 90.3958, routes: ['route1', 'route3', 'route4'] },
+        { name: 'Gulshan', lat: 23.7925, lng: 90.4078, routes: ['route2'] },
+        { name: 'Banani', lat: 23.7937, lng: 90.4066, routes: ['route2', 'route3'] },
+        { name: 'Mirpur 10', lat: 23.8067, lng: 90.3686, routes: ['route2'] },
+        { name: 'Uttara', lat: 23.8759, lng: 90.3795, routes: ['route3'] },
+        { name: 'Motijheel', lat: 23.7334, lng: 90.4176, routes: ['route1', 'route4'] },
+        { name: 'Sadarghat', lat: 23.7104, lng: 90.4074, routes: ['route3'] },
+        { name: 'Airport', lat: 23.8436, lng: 90.3978, routes: ['route3', 'route5'] },
+        { name: 'Abdullahpur', lat: 23.8896, lng: 90.3792, routes: ['route3', 'route5'] },
+        { name: 'Khilkhet', lat: 23.8245, lng: 90.4123, routes: ['route2', 'route3'] },
+        { name: 'Bashundhara Gate', lat: 23.8191, lng: 90.4267, routes: ['route2', 'route5'] },
+        { name: 'Kuril Flyover', lat: 23.8212, lng: 90.4215, routes: ['route2', 'route3'] },
+        { name: 'Notun Bazar', lat: 23.8002, lng: 90.4301, routes: ['route2'] },
+        { name: 'Baridhara DOHS', lat: 23.8107, lng: 90.4260, routes: ['route2', 'route5'] },
+        { name: 'Uttara Sector 13', lat: 23.8815, lng: 90.3772, routes: ['route3', 'route5'] },
+        { name: 'House Building', lat: 23.8712, lng: 90.3790, routes: ['route3'] },
+        { name: 'Uttara University', lat: 23.8667, lng: 90.3795, routes: ['route3', 'route5'] }
+    ];
+}
+
+        function getCrowdingLevel(passengers) {
+            if (passengers < 20) return { level: 'low', text: '🟢 Low' };
+            if (passengers < 30) return { level: 'medium', text: '🟡 Medium' };
+            return { level: 'high', text: '🔴 High' };
+        }
+
+        function createBusIcon(color) {
+            return L.divIcon({
+                html: `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 18px;">🚌</div>`,
+                className: '',
+                iconSize: [34, 34]
+            });
+        }
+
+        function createStopIcon() {
+            return L.divIcon({
+                html: `<div class="bus-stop-marker"></div>`,
+                className: '',
+                iconSize: [16, 16]
+            });
+        }
+
+        function updateMap() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            buses.forEach(bus => {
+                if (currentRoute !== 'all' && bus.route !== currentRoute) return;
+
+                const marker = L.marker([bus.lat, bus.lng], {
+                    icon: createBusIcon(routes[bus.route].color)
+                }).addTo(map);
+
+                const crowding = getCrowdingLevel(bus.passengers);
+                
+                marker.bindPopup(`
+                    <div class="popup-content">
+                        <div class="popup-header">${bus.id}</div>
+                        <div class="popup-row">
+                            <span class="popup-label">Route:</span>
+                            <span class="popup-value">${routes[bus.route].name.split(' - ')[1]}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Speed:</span>
+                            <span class="popup-value">${Math.round(bus.speed)} km/h</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Passengers:</span>
+                            <span class="popup-value">${bus.passengers}/40</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Crowding:</span>
+                            <span class="popup-value">${crowding.text}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Next Stop:</span>
+                            <span class="popup-value">${bus.nextStop}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">ETA:</span>
+                            <span class="popup-value">${bus.eta}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Status:</span>
+                            <span class="popup-value" style="color: ${bus.status === 'on-time' ? '#22c55e' : '#f59e0b'}">${bus.status.toUpperCase()}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Location:</span>
+                            <span class="popup-value">${bus.currentLocation}</span>
+                        </div>
+                        <div class="contact-section">
+                            <div class="contact-title">📞 Contact Information</div>
+                            <div class="contact-item">
+                                <span class="contact-icon">👨‍✈️</span>
+                                <span><strong>Driver:</strong> ${bus.driver}</span>
+                            </div>
+                            <div class="contact-item">
+                                <span class="contact-icon">👨‍🔧</span>
+                                <span><strong>Helper:</strong> ${bus.helper}</span>
+                            </div>
+                        </div>
+                    </div>
+                `, {
+                    className: 'custom-popup'
+                });
+
+                markers.push(marker);
+            });
+        }
+
+        function showAllStops() {
+            showStops = !showStops;
+            
+            if (showStops) {
+                busStops.forEach(stop => {
+                    const marker = L.marker([stop.lat, stop.lng], {
+                        icon: createStopIcon()
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div class="popup-content">
+                            <div class="popup-header">🚏 ${stop.name}</div>
+                            <div class="popup-row">
+                                <span class="popup-label">Stop Name:</span>
+                                <span class="popup-value">${stop.name}</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">Routes:</span>
+                                <span class="popup-value">${stop.routes.length}</span>
+                            </div>
+                        </div>
+                    `);
+
+                    stopMarkers.push(marker);
+                });
+            } else {
+                stopMarkers.forEach(m => map.removeLayer(m));
+                stopMarkers = [];
+            }
+        }
+
+        function updateBusList() {
+            const list = document.getElementById('busList');
+            const filteredBuses = buses.filter(bus => 
+                currentRoute === 'all' || bus.route === currentRoute
+            );
+
+            list.innerHTML = filteredBuses.map(bus => {
+                const crowding = getCrowdingLevel(bus.passengers);
+                return `
+                <div class="bus-item" onclick="focusBus('${bus.id}')">
+                    <div class="bus-header">
+                        <div class="bus-number">${bus.id}</div>
+                        <div class="crowding ${crowding.level}">${crowding.text}</div>
+                    </div>
+                    <div class="bus-route">${routes[bus.route].name.split(' - ')[1]}</div>
+                    <div class="bus-info">
+                        <span>⚡ ${Math.round(bus.speed)} km/h</span>
+                        <span>👥 ${bus.passengers}/40</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>📍 ${bus.currentLocation}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>🚏 Next: ${bus.nextStop}</span>
+                        <span>⏱️ ${bus.eta}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>👨‍✈️ ${bus.driver}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>👨‍🔧 ${bus.helper}</span>
+                    </div>
+                    <span class="status-badge ${bus.status.replace('-', '')}">${bus.status.toUpperCase()}</span>
+                </div>
+            `}).join('');
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = buses.filter(b => currentRoute === 'all' || b.route === currentRoute).length;
+            const onTime = buses.filter(b => (currentRoute === 'all' || b.route === currentRoute) && b.status === 'on-time').length;
+            const delayed = buses.filter(b => (currentRoute === 'all' || b.route === currentRoute) && b.status === 'delayed').length;
+            const avgSpeed = Math.round(buses.filter(b => currentRoute === 'all' || b.route === currentRoute).reduce((sum, b) => sum + b.speed, 0) / total);
+
+            document.getElementById('totalBuses').textContent = total;
+            document.getElementById('onTimeBuses').textContent = onTime;
+            document.getElementById('delayedBuses').textContent = delayed;
+            document.getElementById('avgSpeed').textContent = avgSpeed + ' km/h';
+        }
+
+        function updateBusPositions() {
+            buses.forEach(bus => {
+                bus.lat += (Math.random() - 0.5) * 0.003 * bus.direction;
+                bus.lng += (Math.random() - 0.5) * 0.003 * bus.direction;
+                bus.speed = Math.max(15, Math.min(40, bus.speed + (Math.random() - 0.5) * 5));
+                bus.passengers = Math.max(5, Math.min(40, bus.passengers + Math.floor(Math.random() * 3 - 1)));
+                
+                // Update ETA randomly
+                const etaMinutes = Math.floor(Math.random() * 10) + 1;
+                bus.eta = etaMinutes + ' min';
+            });
+        }
+
+        function focusBus(busId) {
+            const bus = buses.find(b => b.id === busId);
+            if (bus) {
+                map.setView([bus.lat, bus.lng], 15);
+                const marker = markers.find(m => {
+                    const pos = m.getLatLng();
+                    return Math.abs(pos.lat - bus.lat) < 0.0001 && Math.abs(pos.lng - bus.lng) < 0.0001;
+                });
+                if (marker) marker.openPopup();
+            }
+        }
+
+        function centerMap() {
+            const visibleBuses = buses.filter(b => currentRoute === 'all' || b.route === currentRoute);
+            if (visibleBuses.length > 0) {
+                const bounds = L.latLngBounds(visibleBuses.map(b => [b.lat, b.lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        function filterRoute() {
+            currentRoute = document.getElementById('routeSelect').value;
+            updateMap();
+            updateBusList();
+        }
+
+        function toggleSimulation() {
+            simulationRunning = !simulationRunning;
+            const btn = document.getElementById('simBtn');
+            btn.textContent = simulationRunning ? '⏸️ Pause' : '▶️ Resume';
+        }
+
+        function searchBus() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const list = document.getElementById('busList');
+            
+            if (searchTerm === '') {
+                updateBusList();
+                return;
+            }
+
+            const filteredBuses = buses.filter(bus => 
+                bus.id.toLowerCase().includes(searchTerm) ||
+                bus.nextStop.toLowerCase().includes(searchTerm) ||
+                bus.currentLocation.toLowerCase().includes(searchTerm) ||
+                routes[bus.route].name.toLowerCase().includes(searchTerm)
+            );
+
+            list.innerHTML = filteredBuses.map(bus => {
+                const crowding = getCrowdingLevel(bus.passengers);
+                return `
+                <div class="bus-item" onclick="focusBus('${bus.id}')">
+                    <div class="bus-header">
+                        <div class="bus-number">${bus.id}</div>
+                        <div class="crowding ${crowding.level}">${crowding.text}</div>
+                    </div>
+                    <div class="bus-route">${routes[bus.route].name.split(' - ')[1]}</div>
+                    <div class="bus-info">
+                        <span>⚡ ${Math.round(bus.speed)} km/h</span>
+                        <span>👥 ${bus.passengers}/40</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>📍 ${bus.currentLocation}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>🚏 Next: ${bus.nextStop}</span>
+                        <span>⏱️ ${bus.eta}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>👨‍✈️ ${bus.driver}</span>
+                    </div>
+                    <div class="bus-info">
+                        <span>👨‍🔧 ${bus.helper}</span>
+                    </div>
+                    <span class="status-badge ${bus.status.replace('-', '')}">${bus.status.toUpperCase()}</span>
+                </div>
+            `}).join('');
+        }
+
+        function findNearestBus() {
+            // Simulate user location (Mohakhali area)
+            const userLat = 23.7808;
+            const userLng = 90.4125;
+
+            let nearestBus = null;
+            let minDistance = Infinity;
+
+            buses.forEach(bus => {
+                const distance = Math.sqrt(
+                    Math.pow(bus.lat - userLat, 2) + 
+                    Math.pow(bus.lng - userLng, 2)
+                );
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestBus = bus;
+                }
+            });
+
+            if (nearestBus) {
+                focusBus(nearestBus.id);
+                alert(`Nearest Bus: ${nearestBus.id}\nLocation: ${nearestBus.currentLocation}\nETA: ${nearestBus.eta}`);
+            }
+        }
+
+        function simulate() {
+            if (simulationRunning) {
+                updateBusPositions();
+                updateMap();
+                updateBusList();
+            }
+            setTimeout(simulate, 90000);
+        }
+
+        window.onload = function() {
+            initMap();
+            createBuses();
+            createBusStops();
+            updateMap();
+            updateBusList();
+            simulate();
+        };
+    </script>
+</body>
+</html>
